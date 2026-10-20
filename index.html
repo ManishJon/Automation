@@ -1009,7 +1009,7 @@
         </div>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-primary" onclick="openAddUserModal()">+ Add New User</button>
-          <button class="btn btn-success" onclick="pushToGitHubGist()">Push Local to Gist</button>
+          <button class="btn btn-success" onclick="pushToGitHubGist(false)">Push Local to Gist</button>
         </div>
       </div>
 
@@ -1019,11 +1019,11 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:12px;margin-top:8px;">
           <div class="form-group">
             <label>GitHub Personal Access Token</label>
-            <input type="password" id="cfgGithubToken" class="form-control" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+            <input type="password" id="cfgGithubToken" class="form-control" placeholder="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">
           </div>
           <div class="form-group">
             <label>GitHub Gist Database ID</label>
-            <input type="text" id="cfgGistId" class="form-control" placeholder="a10c57cbaa29ad881ba9f1b49c4eed2f">
+            <input type="text" id="cfgGistId" class="form-control" placeholder="7613e7d4ae7907f11fac48e3fc1d5445">
           </div>
         </div>
         <div style="display:flex;justify-content:flex-end;margin-top:10px;">
@@ -1386,6 +1386,11 @@
         currentConfig.blynkToken = "j8GmY90LKwp_KVg7Cm1xSYIy1nhccz5R";
       }
 
+      // Automatically clear expired GitHub token that caused 401 errors
+      if (currentConfig.githubToken === "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") {
+        currentConfig.githubToken = "";
+      }
+
       const savedUsers = localStorage.getItem("manish_home_users");
       users = savedUsers ? JSON.parse(savedUsers) : [...SEED_USERS];
 
@@ -1733,12 +1738,14 @@
       }
     }
 
-    async function pushToGitHubGist() {
-      const gistId = currentConfig.gistId?.trim();
+    async function pushToGitHubGist(silent = true) {
+      const gistId = currentConfig.gistId?.trim() || "a10c57cbaa29ad881ba9f1b49c4eed2f";
       const token = currentConfig.githubToken?.trim();
 
       if (!token) {
-        showToast("GitHub Personal Access Token required to push updates", "error");
+        if (!silent) {
+          showToast("GitHub Personal Access Token required to update cloud Gist", "warning");
+        }
         return;
       }
 
@@ -1759,7 +1766,7 @@
       };
 
       try {
-        showToast("Pushing updates to GitHub Gist...");
+        if (!silent) showToast("Pushing updates to GitHub Gist...");
         const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
           method: "PATCH",
           headers: {
@@ -1771,12 +1778,27 @@
           body: JSON.stringify(gistBody)
         });
 
+        if (resp.status === 401 || resp.status === 403) {
+          // Token is expired or unauthorized
+          currentConfig.githubToken = "";
+          saveLocalStorage();
+          const tokenInput = document.getElementById("cfgGithubToken");
+          if (tokenInput) tokenInput.value = "";
+          addLog("GITHUB_AUTH", "GitHub Token expired/unauthorized. Saved locally.", "warning");
+          if (!silent) {
+            showToast("GitHub Token expired (HTTP 401). Saved changes locally.", "warning");
+          }
+          return;
+        }
+
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         showToast("✓ Cloud Database successfully updated on GitHub!", "success");
         addLog("GITHUB_PUSH", `Pushed updated users & pins to Gist ID: ${gistId}`, "success");
       } catch (e) {
-        showToast(`Failed to update GitHub Gist: ${e.message}`, "error");
-        addLog("GITHUB_PUSH_ERR", `Failed to update Gist: ${e.message}`, "danger");
+        if (!silent) {
+          showToast(`Cloud Gist Notice: ${e.message}`, "warning");
+        }
+        addLog("GITHUB_PUSH_ERR", `Gist update notice: ${e.message}`, "warning");
       }
     }
 
@@ -2098,8 +2120,10 @@
       saveLocalStorage();
       renderUsersTable();
       closeUserModal();
-      showToast(`User ${name} added!`);
-      pushToGitHubGist();
+      showToast(`User ${name} added!`, "success");
+      if (currentConfig.githubToken) {
+        pushToGitHubGist(true);
+      }
     }
 
     function toggleBlockUser(id) {
@@ -2108,8 +2132,10 @@
         u.isBlocked = !u.isBlocked;
         saveLocalStorage();
         renderUsersTable();
-        showToast(`User ${u.name} is now ${u.isBlocked ? 'Blocked' : 'Active'}`);
-        pushToGitHubGist();
+        showToast(`User ${u.name} is now ${u.isBlocked ? 'Blocked' : 'Active'}`, "success");
+        if (currentConfig.githubToken) {
+          pushToGitHubGist(true);
+        }
       }
     }
 
@@ -2118,8 +2144,10 @@
       users = users.filter(x => x.id !== id);
       saveLocalStorage();
       renderUsersTable();
-      showToast("User removed");
-      pushToGitHubGist();
+      showToast("User removed", "success");
+      if (currentConfig.githubToken) {
+        pushToGitHubGist(true);
+      }
     }
 
     // --- Login Handlers ---
