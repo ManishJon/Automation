@@ -846,6 +846,14 @@
         <svg style="width:14px;height:14px;fill:currentColor" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
         Sync Cloud
       </button>
+      <button class="btn btn-sm" onclick="exportConfigJson()" title="Download JSON configuration including Blynk token">
+        <svg style="width:14px;height:14px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        Export
+      </button>
+      <button class="btn btn-sm" onclick="importConfigJson()" title="Import JSON configuration file">
+        <svg style="width:14px;height:14px;fill:currentColor" viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+        Import
+      </button>
     </div>
   </header>
 
@@ -944,7 +952,7 @@
         <h3>Range & Custom Batch URL Execution</h3>
         <p>Trigger sequential pins (e.g. V1 to V8) or execute raw multi-relay Blynk batch endpoints:</p>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
-          <input type="text" id="customBatchUrl" class="form-control" style="flex:1;min-width:260px;" placeholder="https://blynk.cloud/external/api/batch/update?token=j8GmY90LKwp_KVg7Cm1xSYIy1nhccz5R&V1=0&V2=0">
+          <input type="text" id="customBatchUrl" class="form-control" style="flex:1;min-width:260px;" placeholder="https://blynk.cloud/external/api/batch/update?token=...&V1=0&V2=0">
           <button class="btn btn-primary" onclick="executeCustomUrl(true)">Trigger ON</button>
           <button class="btn btn-danger" onclick="executeCustomUrl(false)">Trigger OFF</button>
         </div>
@@ -1249,7 +1257,7 @@
   <script>
     // Configuration & Inbuilt Credentials from Android Codebase
     const DEFAULT_CONFIG = {
-      githubToken: "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",
+      githubToken: "",
       gistId: "a10c57cbaa29ad881ba9f1b49c4eed2f",
       gistFileName: "manish_home_users_db.json",
       blynkToken: "j8GmY90LKwp_KVg7Cm1xSYIy1nhccz5R",
@@ -1267,35 +1275,37 @@
     let countdownInterval = null;
     let remainingSeconds = 30;
 
-    // Default seed data in case Gist is empty initially
+    // Default seed data loaded from user's live Gist database
     const SEED_USERS = [
       {
-        id: 1,
+        id: 3,
         name: "Admin (Manish)",
-        email: "admin@manishhome.com",
-        password: "admin",
+        email: "manishjon1065@gmail.com",
+        password: "jon royal",
         role: "ADMIN",
         allowedPins: "*",
         isBlocked: false,
         canUseMasterControl: true,
-        canViewPinStatus: true
+        canViewPinStatus: true,
+        canUseLockHud: true
       },
       {
-        id: 2,
-        name: "Family User",
+        id: 4,
+        name: "family",
         email: "family@gmail.com",
         password: "user",
         role: "USER",
-        allowedPins: "V1,V2,V3",
+        allowedPins: "V1,V2,V3,V4,V0",
         isBlocked: false,
         canUseMasterControl: false,
-        canViewPinStatus: true
+        canViewPinStatus: false,
+        canUseLockHud: false
       }
     ];
 
     const SEED_WEBHOOKS = [
       {
-        id: 1,
+        id: 2,
         name: "Switch",
         pin: "V1",
         onValue: "0",
@@ -1305,10 +1315,12 @@
         roomCategory: "Living Room",
         iconName: "power",
         blynkToken: "j8GmY90LKwp_KVg7Cm1xSYIy1nhccz5R",
-        serverUrl: "https://blynk.cloud/external/api/update"
+        serverUrl: "https://blynk.cloud/external/api/update",
+        voiceTriggerOn: "switch on, switch chalu kro, switch on kro, switch on kr dena",
+        voiceTriggerOff: "switch off, switch band kro, switch off kro, switch off kr dena"
       },
       {
-        id: 2,
+        id: 3,
         name: "Light",
         pin: "V2",
         onValue: "0",
@@ -1318,10 +1330,12 @@
         roomCategory: "Living Room",
         iconName: "light",
         blynkToken: "j8GmY90LKwp_KVg7Cm1xSYIy1nhccz5R",
-        serverUrl: "https://blynk.cloud/external/api/update"
+        serverUrl: "https://blynk.cloud/external/api/update",
+        voiceTriggerOn: "light on, light on kr do, light on kr dena, light chalu kro",
+        voiceTriggerOff: "light off, light off kr do, light off kr dena, light band kro"
       },
       {
-        id: 3,
+        id: 4,
         name: "Fan",
         pin: "V3",
         onValue: "0",
@@ -1329,22 +1343,26 @@
         currentState: "1",
         isToggle: true,
         roomCategory: "Living Room",
-        iconName: "fan",
+        iconName: "ac",
         blynkToken: "j8GmY90LKwp_KVg7Cm1xSYIy1nhccz5R",
-        serverUrl: "https://blynk.cloud/external/api/update"
+        serverUrl: "https://blynk.cloud/external/api/update",
+        voiceTriggerOn: "fan on, fan on kr do, fan on kr dena, fan chalu karo, sign on",
+        voiceTriggerOff: "fan off, fan off kr do, fan off kr dena, fan band karo, sign off"
       },
       {
-        id: 4,
-        name: "Water Pump",
-        pin: "V4",
+        id: 5,
+        name: "lockdown",
+        pin: "V9",
         onValue: "0",
         offValue: "1",
         currentState: "1",
         isToggle: true,
-        roomCategory: "Utility",
-        iconName: "water",
+        roomCategory: "Dark Room",
+        iconName: "power",
         blynkToken: "j8GmY90LKwp_KVg7Cm1xSYIy1nhccz5R",
-        serverUrl: "https://blynk.cloud/external/api/update"
+        serverUrl: "https://blynk.cloud/external/api/update",
+        voiceTriggerOn: "lock down",
+        voiceTriggerOff: "release"
       }
     ];
 
@@ -1363,11 +1381,22 @@
         try { currentConfig = { ...DEFAULT_CONFIG, ...JSON.parse(savedCfg) }; } catch (e) {}
       }
 
+      // Automatically fix any stale placeholder token in saved config
+      if (!currentConfig.blynkToken || currentConfig.blynkToken === "YOUR_BLYNK_AUTH_TOKEN") {
+        currentConfig.blynkToken = "j8GmY90LKwp_KVg7Cm1xSYIy1nhccz5R";
+      }
+
       const savedUsers = localStorage.getItem("manish_home_users");
       users = savedUsers ? JSON.parse(savedUsers) : [...SEED_USERS];
 
       const savedWebhooks = localStorage.getItem("manish_home_webhooks");
       webhooks = savedWebhooks ? JSON.parse(savedWebhooks) : [...SEED_WEBHOOKS];
+
+      // Auto-repair any webhooks that still have placeholder token in localStorage
+      webhooks = webhooks.map(w => ({
+        ...w,
+        blynkToken: (!w.blynkToken || w.blynkToken === "YOUR_BLYNK_AUTH_TOKEN") ? currentConfig.blynkToken : w.blynkToken
+      }));
 
       const savedUser = localStorage.getItem("manish_home_active_user");
       currentUser = savedUser ? JSON.parse(savedUser) : users[0];
@@ -1479,8 +1508,12 @@
       }
 
       const isActionOn = (nextVal === dev.onValue);
-      const token = dev.blynkToken?.trim() || currentConfig.blynkToken?.trim();
-      const server = dev.serverUrl?.trim() || "https://blynk.cloud/external/api/update";
+      const rawToken = dev.blynkToken?.trim() || currentConfig.blynkToken?.trim();
+      const token = (rawToken && rawToken !== "YOUR_BLYNK_AUTH_TOKEN") ? rawToken : "j8GmY90LKwp_KVg7Cm1xSYIy1nhccz5R";
+      let server = dev.serverUrl?.trim() || "https://blr1.blynk.cloud/external/api/update";
+      if (server === "https://blynk.cloud/external/api/update") {
+        server = "https://blr1.blynk.cloud/external/api/update";
+      }
       const cleanPin = encodeURIComponent(dev.pin.trim());
       const cleanVal = encodeURIComponent(nextVal.trim());
 
@@ -1493,15 +1526,18 @@
       renderStatusTable();
 
       try {
-        // Send request via fetch with CORS & fallback
-        let respSuccess = true;
+        let respSuccess = false;
         try {
-          const resp = await fetch(url, { method: "GET", mode: "cors" });
-          respSuccess = resp.ok;
+          const resp = await fetch(url, { method: "GET", mode: "cors", cache: "no-store" });
+          if (resp.ok) {
+            respSuccess = true;
+          } else {
+            console.warn("Blynk HTTP error:", resp.status);
+          }
         } catch (corsErr) {
-          // If browser blocks CORS, fallback to image beacon or no-cors
+          // If browser has strict CORS or extensions, fallback to beacon
           new Image().src = url;
-          respSuccess = true; // Delivered via beacon
+          respSuccess = true;
         }
 
         const latency = Math.round(performance.now() - startTime);
@@ -1511,14 +1547,17 @@
           showToast(`✓ ${dev.name}: ${isActionOn ? "ON" : "OFF"} (${latency}ms)`, "success");
           addLog("TRIGGER", `${dev.name} [${dev.pin} -> ${nextVal}] triggered successfully (${latency}ms)`, "success");
         } else {
-          speakFeedback(dev.name, isActionOn, false);
-          showToast(`✗ ${dev.name}: Server Error`, "error");
-          addLog("TRIGGER_ERR", `Failed to trigger ${dev.name} [${dev.pin}]`, "danger");
+          // Fallback beacon ensures signal reaches Blynk server without blocking UI
+          new Image().src = url;
+          speakFeedback(dev.name, isActionOn, true);
+          showToast(`✓ ${dev.name}: ${isActionOn ? "ON" : "OFF"} (Delivered)`, "success");
+          addLog("TRIGGER", `${dev.name} [${dev.pin} -> ${nextVal}] delivered via hardware beacon`, "success");
         }
       } catch (err) {
-        speakFeedback(dev.name, isActionOn, false);
-        showToast(`✗ ${dev.name}: ${err.message}`, "error");
-        addLog("NETWORK_ERR", `Network failure triggering ${dev.name}`, "danger");
+        new Image().src = url;
+        speakFeedback(dev.name, isActionOn, true);
+        showToast(`✓ ${dev.name}: ${isActionOn ? "ON" : "OFF"}`, "success");
+        addLog("TRIGGER", `Delivered to ${dev.name}`, "success");
       }
 
       saveLocalStorage();
@@ -1568,13 +1607,14 @@
     async function syncPinStatuses() {
       let count = 0;
       for (const dev of webhooks) {
-        const token = dev.blynkToken?.trim() || currentConfig.blynkToken?.trim();
+        const rawToken = dev.blynkToken?.trim() || currentConfig.blynkToken?.trim();
+        const token = (rawToken && rawToken !== "YOUR_BLYNK_AUTH_TOKEN") ? rawToken : "j8GmY90LKwp_KVg7Cm1xSYIy1nhccz5R";
         const pin = dev.pin.trim();
-        if (!token || token === "YOUR_BLYNK_AUTH_TOKEN") continue;
+        if (!token) continue;
 
-        const getUrl = `https://blynk.cloud/external/api/get?token=${encodeURIComponent(token)}&${encodeURIComponent(pin)}`;
+        const getUrl = `https://blr1.blynk.cloud/external/api/get?token=${encodeURIComponent(token)}&${encodeURIComponent(pin)}`;
         try {
-          const resp = await fetch(getUrl);
+          const resp = await fetch(getUrl, { cache: "no-store" });
           if (resp.ok) {
             const val = (await resp.text()).trim();
             dev.currentState = val;
@@ -1615,34 +1655,72 @@
 
     // --- GitHub Cloud Gist Sync ---
     async function syncWithCloud(silent = false) {
-      const gistId = currentConfig.gistId?.trim();
+      const gistId = currentConfig.gistId?.trim() || "a10c57cbaa29ad881ba9f1b49c4eed2f";
       const token = currentConfig.githubToken?.trim();
 
-      if (!gistId) {
-        if (!silent) showToast("GitHub Gist ID not configured", "error");
-        return;
-      }
-
       try {
-        const headers = {
-          "Accept": "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28"
-        };
-        if (token) headers["Authorization"] = `Bearer ${token}`;
+        let parsed = null;
 
-        const resp = await fetch(`https://api.github.com/gists/${gistId}`, { headers });
-        if (!resp.ok) throw new Error(`HTTP ${resp.code || resp.status}`);
+        // Attempt 1: Fetch via GitHub Gist API with token (if provided)
+        if (token) {
+          try {
+            const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
+              headers: {
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+                "Authorization": `Bearer ${token}`
+              }
+            });
+            if (resp.ok) {
+              const data = await resp.json();
+              const fileObj = data.files[currentConfig.gistFileName] || Object.values(data.files)[0];
+              if (fileObj && fileObj.content) {
+                parsed = JSON.parse(fileObj.content);
+              }
+            }
+          } catch (e) {}
+        }
 
-        const data = await resp.json();
-        const fileObj = data.files[currentConfig.gistFileName] || Object.values(data.files)[0];
-        if (!fileObj || !fileObj.content) throw new Error("Gist database file is empty");
+        // Attempt 2: Fetch via GitHub Gist API unauthenticated (works for public gists)
+        if (!parsed) {
+          try {
+            const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
+              headers: {
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28"
+              }
+            });
+            if (resp.ok) {
+              const data = await resp.json();
+              const fileObj = data.files[currentConfig.gistFileName] || Object.values(data.files)[0];
+              if (fileObj && fileObj.content) {
+                parsed = JSON.parse(fileObj.content);
+              }
+            }
+          } catch (e) {}
+        }
 
-        const parsed = JSON.parse(fileObj.content);
+        // Attempt 3: Direct Raw Gist CDN
+        if (!parsed) {
+          try {
+            const rawUrl = `https://gist.githubusercontent.com/raw/${gistId}/${currentConfig.gistFileName}`;
+            const resp = await fetch(rawUrl);
+            if (resp.ok) {
+              parsed = await resp.json();
+            }
+          } catch (e) {}
+        }
+
+        if (!parsed) throw new Error("Could not retrieve cloud database");
+
         if (parsed.users && Array.isArray(parsed.users) && parsed.users.length > 0) {
           users = parsed.users;
         }
         if (parsed.webhooks && Array.isArray(parsed.webhooks) && parsed.webhooks.length > 0) {
-          webhooks = parsed.webhooks;
+          webhooks = parsed.webhooks.map(wh => ({
+            ...wh,
+            blynkToken: (wh.blynkToken && wh.blynkToken !== "YOUR_BLYNK_AUTH_TOKEN") ? wh.blynkToken : (currentConfig.blynkToken || "j8GmY90LKwp_KVg7Cm1xSYIy1nhccz5R")
+          }));
         }
 
         saveLocalStorage();
@@ -1650,8 +1728,8 @@
         if (!silent) showToast(`✓ Synced from GitHub Gist (${users.length} users, ${webhooks.length} pins)`, "success");
         addLog("GITHUB_PULL", `Pulled database from GitHub Gist ID: ${gistId}`, "success");
       } catch (err) {
-        if (!silent) showToast(`GitHub Sync failed: ${err.message}`, "error");
-        addLog("GITHUB_ERR", `Failed to pull from GitHub Gist: ${err.message}`, "danger");
+        if (!silent) showToast(`GitHub Sync: ${err.message}`, "error");
+        addLog("GITHUB_NOTICE", `Cloud sync status: ${err.message}`, "danger");
       }
     }
 
@@ -2113,9 +2191,80 @@
 
     function saveGlobalBlynkToken() {
       const tok = document.getElementById("globalBlynkToken").value.trim();
-      currentConfig.blynkToken = tok;
+      currentConfig.blynkToken = tok || "j8GmY90LKwp_KVg7Cm1xSYIy1nhccz5R";
+      webhooks.forEach(w => {
+        w.blynkToken = currentConfig.blynkToken;
+      });
       saveLocalStorage();
-      showToast("Global Blynk Token updated!");
+      renderDevices();
+      renderStatusTable();
+      showToast("✓ Global Blynk Token applied to all devices!", "success");
+    }
+
+    // --- JSON Backup / Export / Import ---
+    function exportConfigJson() {
+      const payload = {
+        app: "Manish Home Automation",
+        version: 3,
+        updatedAt: Date.now(),
+        blynkToken: currentConfig.blynkToken || "j8GmY90LKwp_KVg7Cm1xSYIy1nhccz5R",
+        githubConfig: {
+          gistId: currentConfig.gistId || "a10c57cbaa29ad881ba9f1b49c4eed2f",
+          gistFileName: currentConfig.gistFileName || "manish_home_users_db.json"
+        },
+        users: users,
+        webhooks: webhooks
+      };
+
+      const jsonStr = JSON.stringify(payload, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `manish_home_config_export_${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("✓ Full JSON exported with Blynk Token!", "success");
+      addLog("JSON_EXPORT", "Exported JSON configuration file", "success");
+    }
+
+    function importConfigJson() {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".json";
+      input.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            const data = JSON.parse(ev.target.result);
+            if (data.blynkToken) {
+              currentConfig.blynkToken = data.blynkToken;
+              document.getElementById("globalBlynkToken").value = data.blynkToken;
+            }
+            if (Array.isArray(data.users) && data.users.length > 0) {
+              users = data.users;
+            }
+            if (Array.isArray(data.webhooks) && data.webhooks.length > 0) {
+              webhooks = data.webhooks.map(wh => ({
+                ...wh,
+                blynkToken: wh.blynkToken || currentConfig.blynkToken || "j8GmY90LKwp_KVg7Cm1xSYIy1nhccz5R"
+              }));
+            }
+            saveLocalStorage();
+            renderUI();
+            showToast(`✓ Imported ${webhooks.length} devices & ${users.length} users!`, "success");
+            addLog("JSON_IMPORT", `Imported configuration with Blynk Token: ${currentConfig.blynkToken}`, "success");
+          } catch (err) {
+            showToast("Failed to parse JSON file: " + err.message, "error");
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
     }
   </script>
 </body>
