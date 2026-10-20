@@ -1,0 +1,2122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manish Home Automation - Web Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #070B14;
+      --bg-surface: #0E1626;
+      --bg-card: #141E33;
+      --bg-card-hover: #1A2640;
+      --bg-glass: rgba(20, 30, 51, 0.75);
+      --border-subtle: rgba(0, 229, 255, 0.15);
+      --border-glow: rgba(0, 229, 255, 0.4);
+      --primary: #00E5FF;
+      --primary-glow: rgba(0, 229, 255, 0.25);
+      --electric-blue: #2979FF;
+      --success: #00E676;
+      --success-glow: rgba(0, 230, 118, 0.25);
+      --danger: #FF1744;
+      --danger-glow: rgba(255, 23, 68, 0.25);
+      --warning: #FFC107;
+      --text-primary: #F1F5F9;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+      --shadow-card: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+      --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at 50% 0%, #101c38 0%, var(--bg-deep) 75%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background grid */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-image: 
+        linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(7, 11, 20, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--electric-blue), var(--primary));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    .brand-icon svg {
+      width: 22px;
+      height: 22px;
+      fill: #fff;
+    }
+
+    .brand-text h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #fff, var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-text span {
+      font-size: 0.72rem;
+      color: var(--primary);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      display: inline-block;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-pill {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .user-pill:hover {
+      border-color: var(--primary);
+      background: var(--bg-card-hover);
+    }
+
+    .role-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      background: rgba(0, 229, 255, 0.15);
+      color: var(--primary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .role-badge.admin {
+      background: rgba(255, 23, 68, 0.15);
+      color: var(--danger);
+      border-color: rgba(255, 23, 68, 0.3);
+    }
+
+    /* Navigation Bar */
+    nav {
+      background: var(--bg-surface);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 6px 24px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      position: relative;
+      z-index: 90;
+    }
+
+    nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: var(--transition);
+    }
+
+    .nav-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .nav-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .nav-btn.active {
+      color: var(--primary);
+      background: rgba(0, 229, 255, 0.1);
+      box-shadow: inset 0 -2px 0 var(--primary);
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Section Headers */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .section-title h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .section-title p {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* Buttons */
+    .btn {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+      user-select: none;
+    }
+
+    .btn:hover {
+      border-color: var(--primary);
+      background: var(--bg-card-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--electric-blue), var(--primary));
+      border: none;
+      color: #fff;
+      box-shadow: 0 4px 16px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 24px rgba(0, 229, 255, 0.4);
+      filter: brightness(1.1);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #00C853, var(--success));
+      border: none;
+      color: #070B14;
+      font-weight: 700;
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #D50000, var(--danger));
+      border: none;
+      color: #fff;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.78rem;
+    }
+
+    .btn-icon-only {
+      padding: 8px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* Device Cards Grid */
+    .devices-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .device-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+      box-shadow: var(--shadow-card);
+    }
+
+    .device-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .device-card.is-on {
+      border-color: rgba(0, 230, 118, 0.5);
+      background: linear-gradient(180deg, rgba(0, 230, 118, 0.05) 0%, var(--bg-card) 60%);
+    }
+
+    .device-card.is-on::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--success), var(--primary));
+      box-shadow: 0 0 12px var(--success);
+    }
+
+    .device-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .device-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .device-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: var(--transition);
+    }
+
+    .device-card.is-on .device-icon-box {
+      background: rgba(0, 230, 118, 0.15);
+      color: var(--success);
+      border-color: rgba(0, 230, 118, 0.3);
+      box-shadow: 0 0 16px var(--success-glow);
+    }
+
+    .device-icon-box svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    .device-titles h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .device-meta {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .pin-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(0, 229, 255, 0.12);
+      color: var(--primary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* Switch Component */
+    .switch-wrapper {
+      display: flex;
+      align-items: center;
+    }
+
+    .custom-switch {
+      position: relative;
+      display: inline-block;
+      width: 54px;
+      height: 30px;
+    }
+
+    .custom-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #1e293b;
+      transition: 0.3s;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #fff;
+      transition: 0.3s;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+
+    input:checked + .slider {
+      background: linear-gradient(135deg, var(--success), #00b0ff);
+      border-color: var(--success);
+      box-shadow: 0 0 16px var(--success-glow);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(24px);
+      background-color: var(--bg-deep);
+    }
+
+    .custom-switch.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .device-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .device-card-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .action-icon-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: var(--transition);
+    }
+
+    .action-icon-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .action-icon-btn svg {
+      width: 15px;
+      height: 15px;
+      fill: currentColor;
+    }
+
+    /* Master Control Cards */
+    .master-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .control-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: var(--shadow-card);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .control-card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .control-card p {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Pin Status Live Table */
+    .status-table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+    }
+
+    .status-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    .status-table th {
+      background: rgba(0, 0, 0, 0.25);
+      padding: 14px 18px;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .status-table td {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-primary);
+    }
+
+    .status-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .status-pill.on {
+      background: rgba(0, 230, 118, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(0, 230, 118, 0.3);
+    }
+
+    .status-pill.off {
+      background: rgba(255, 23, 68, 0.12);
+      color: var(--danger);
+      border: 1px solid rgba(255, 23, 68, 0.25);
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+      animation: modalPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes modalPop {
+      from { transform: scale(0.94); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .modal-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 75vh;
+      overflow-y: auto;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .form-control {
+      background: var(--bg-deep);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glow);
+      color: var(--text-primary);
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+      animation: slideIn 0.25s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .toast.success {
+      border-color: var(--success);
+      box-shadow: 0 0 20px var(--success-glow);
+    }
+
+    .toast.error {
+      border-color: var(--danger);
+      box-shadow: 0 0 20px var(--danger-glow);
+    }
+
+    /* Logs view */
+    .log-box {
+      background: #040810;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      height: 480px;
+      overflow-y: auto;
+      color: #94A3B8;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .log-entry {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      line-height: 1.4;
+    }
+
+    .log-time {
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .log-tag {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .log-tag.success { color: var(--success); }
+    .log-tag.danger { color: var(--danger); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      header {
+        padding: 12px 16px;
+      }
+      main {
+        padding: 16px;
+      }
+      .devices-grid {
+        grid-template-columns: 1fr;
+      }
+      .brand-text h1 {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <a href="#" class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.5L18 11v7h-2v-6H8v6H6v-7l6-5.5z"/></svg>
+      </div>
+      <div class="brand-text">
+        <h1>Manish Home Automation</h1>
+        <span><span class="status-dot"></span> Cloud Live • Web Edition</span>
+      </div>
+    </a>
+
+    <div class="header-actions">
+      <div class="user-pill" id="userPill" onclick="openLoginModal()">
+        <span id="headerUserName">Admin (Manish)</span>
+        <span class="role-badge admin" id="headerRoleBadge">ADMIN</span>
+      </div>
+      <button class="btn btn-sm btn-primary" onclick="syncWithCloud()">
+        <svg style="width:14px;height:14px;fill:currentColor" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+        Sync Cloud
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav>
+    <button class="nav-btn active" onclick="switchTab('devices', this)">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+      Devices & Relays
+    </button>
+    <button class="nav-btn" onclick="switchTab('master', this)">
+      <svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+      Master Controls
+    </button>
+    <button class="nav-btn" onclick="switchTab('status', this)">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+      Pin Live Status
+    </button>
+    <button class="nav-btn" onclick="switchTab('cloud', this)">
+      <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+      Users & GitHub Sync
+    </button>
+    <button class="nav-btn" onclick="switchTab('settings', this)">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      Voice Audio & Setup
+    </button>
+    <button class="nav-btn" onclick="switchTab('logs', this)">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+      Activity Logs
+    </button>
+  </nav>
+
+  <!-- Main Content -->
+  <main>
+    <!-- TAB 1: DEVICES & RELAYS -->
+    <section id="tab-devices" class="tab-content active">
+      <div class="section-header">
+        <div class="section-title">
+          <h2>Connected Devices & Switches</h2>
+          <p>Instant real-time control via Blynk Cloud API with speech confirmations</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="openDeviceModal()">
+            <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Add New Device
+          </button>
+        </div>
+      </div>
+
+      <div class="devices-grid" id="devicesGrid">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+
+    <!-- TAB 2: MASTER CONTROLS -->
+    <section id="tab-master" class="tab-content">
+      <div class="section-header">
+        <div class="section-title">
+          <h2>Master Batch Operations</h2>
+          <p>Trigger multiple home pins simultaneously or execute custom webhook endpoints</p>
+        </div>
+      </div>
+
+      <div class="master-grid">
+        <div class="control-card">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="brand-icon" style="background:var(--success);">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            </div>
+            <div>
+              <h3>Master All Pins ON</h3>
+              <p>Turn on every active appliance simultaneously</p>
+            </div>
+          </div>
+          <button class="btn btn-success" style="width:100%;justify-content:center;padding:12px;" onclick="triggerMasterBatch(true)">
+            TURN EVERYTHING ON
+          </button>
+        </div>
+
+        <div class="control-card">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="brand-icon" style="background:var(--danger);">
+              <svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+            </div>
+            <div>
+              <h3>Master All Pins OFF</h3>
+              <p>Safely shut down all lights, fans, coolers and pumps</p>
+            </div>
+          </div>
+          <button class="btn btn-danger" style="width:100%;justify-content:center;padding:12px;" onclick="triggerMasterBatch(false)">
+            TURN EVERYTHING OFF
+          </button>
+        </div>
+      </div>
+
+      <div class="control-card">
+        <h3>Range & Custom Batch URL Execution</h3>
+        <p>Trigger sequential pins (e.g. V1 to V8) or execute raw multi-relay Blynk batch endpoints:</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+          <input type="text" id="customBatchUrl" class="form-control" style="flex:1;min-width:260px;" placeholder="https://blynk.cloud/external/api/batch/update?token=...&V1=0&V2=0">
+          <button class="btn btn-primary" onclick="executeCustomUrl(true)">Trigger ON</button>
+          <button class="btn btn-danger" onclick="executeCustomUrl(false)">Trigger OFF</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: PIN LIVE STATUS -->
+    <section id="tab-status" class="tab-content">
+      <div class="section-header">
+        <div class="section-title">
+          <h2>Live Virtual Pin Monitor</h2>
+          <p>Real-time synchronization status with Blynk IoT Cloud & Hardware State</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:0.8rem;color:var(--text-secondary)">Auto-Refresh:</span>
+          <select id="autoSyncIntervalSelect" class="form-control" style="padding:6px 12px;font-size:0.8rem;" onchange="changeSyncInterval(this.value)">
+            <option value="5">5s (Fast)</option>
+            <option value="8">8s</option>
+            <option value="15">15s (Normal)</option>
+            <option value="30" selected>30s (Default)</option>
+            <option value="60">60s (Eco)</option>
+          </select>
+          <button class="btn btn-sm btn-primary" onclick="syncPinStatuses()">
+            Sync Now (<span id="syncCountdown">30</span>s)
+          </button>
+        </div>
+      </div>
+
+      <div class="status-table-container">
+        <table class="status-table">
+          <thead>
+            <tr>
+              <th>Device / Appliance</th>
+              <th>Blynk Pin</th>
+              <th>Current State</th>
+              <th>Room Category</th>
+              <th>Last Checked</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="statusTableBody">
+            <!-- Injected via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 4: USERS & GITHUB SYNC -->
+    <section id="tab-cloud" class="tab-content">
+      <div class="section-header">
+        <div class="section-title">
+          <h2>Cloud Synchronization & Access Control</h2>
+          <p>Centralized GitHub Gist database syncing across all mobile and web clients</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="openAddUserModal()">+ Add New User</button>
+          <button class="btn btn-success" onclick="pushToGitHubGist()">Push Local to Gist</button>
+        </div>
+      </div>
+
+      <div class="control-card" style="margin-bottom:20px;">
+        <h3>GitHub Cloud Database Configuration</h3>
+        <p>Your web dashboard reads and writes to your private GitHub Gist, sharing user accounts and device pins in real time:</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:12px;margin-top:8px;">
+          <div class="form-group">
+            <label>GitHub Personal Access Token</label>
+            <input type="password" id="cfgGithubToken" class="form-control" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+          </div>
+          <div class="form-group">
+            <label>GitHub Gist Database ID</label>
+            <input type="text" id="cfgGistId" class="form-control" placeholder="a10c57cbaa29ad881ba9f1b49c4eed2f">
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+          <button class="btn btn-primary" onclick="saveCloudConfig()">Save Credentials & Sync</button>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-bottom:12px;">
+        <h3>Authorized User Accounts</h3>
+        <p>Control which family members or guests can operate specific hardware pins</p>
+      </div>
+
+      <div class="status-table-container">
+        <table class="status-table">
+          <thead>
+            <tr>
+              <th>Name & Email</th>
+              <th>Role</th>
+              <th>Allowed Pins</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <!-- Injected via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 5: VOICE AUDIO FEEDBACK & SETTINGS -->
+    <section id="tab-settings" class="tab-content">
+      <div class="section-header">
+        <div class="section-title">
+          <h2>Spoken Voice Feedback & System Settings</h2>
+          <p>Configure spoken voice acknowledgments whenever any device is triggered</p>
+        </div>
+      </div>
+
+      <div class="control-card" style="margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <h3>Voice Feedback / Spoken Confirmation</h3>
+            <p>App speaks aloud when a device turns ON or OFF using Web Speech synthesis</p>
+          </div>
+          <label class="custom-switch">
+            <input type="checkbox" id="voiceFeedbackToggle" checked onchange="saveFeedbackSettings()">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap;">
+          <label style="font-size:0.85rem;color:var(--text-secondary);font-weight:600;">Feedback Language:</label>
+          <select id="voiceLangSelect" class="form-control" style="width:260px;" onchange="saveFeedbackSettings()">
+            <option value="HI" selected>हिंदी / Hinglish ("लाइट चालू हो गया है")</option>
+            <option value="EN">English ("Light turned on")</option>
+          </select>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+          <button class="btn btn-success btn-sm" onclick="testSpokenFeedback(true)">
+            🔊 Test Spoken ON ("चालू आवाज़")
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="testSpokenFeedback(false)">
+            🔊 Test Spoken OFF ("बंद आवाज़")
+          </button>
+        </div>
+      </div>
+
+      <div class="control-card">
+        <h3>Blynk IoT Cloud Global Token</h3>
+        <p>Set a default Blynk Auth Token applied automatically when creating new pins:</p>
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <input type="text" id="globalBlynkToken" class="form-control" placeholder="Enter your Blynk Device Auth Token">
+          <button class="btn btn-primary" onclick="saveGlobalBlynkToken()">Apply Token</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: LOGS -->
+    <section id="tab-logs" class="tab-content">
+      <div class="section-header">
+        <div class="section-title">
+          <h2>System Activity & Execution Logs</h2>
+          <p>Real-time audit log of HTTP response codes, latency and pin changes</p>
+        </div>
+        <button class="btn btn-sm btn-danger" onclick="clearLogs()">Clear Logs</button>
+      </div>
+
+      <div class="log-box" id="logContainer">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Device Modal (Create/Edit) -->
+  <div class="modal-overlay" id="deviceModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="deviceModalTitle">Add Device / Relay</h3>
+        <button class="action-icon-btn" onclick="closeDeviceModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="devEditId">
+        <div class="form-group">
+          <label>Device Name</label>
+          <input type="text" id="devName" class="form-control" placeholder="e.g. Living Room Fan">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label>Virtual Pin</label>
+            <input type="text" id="devPin" class="form-control" placeholder="V1">
+          </div>
+          <div class="form-group">
+            <label>Room Category</label>
+            <input type="text" id="devRoom" class="form-control" placeholder="Living Room">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label>ON Value (Hardware Relay)</label>
+            <input type="text" id="devOnVal" class="form-control" value="0">
+          </div>
+          <div class="form-group">
+            <label>OFF Value</label>
+            <input type="text" id="devOffVal" class="form-control" value="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Device Icon</label>
+          <select id="devIcon" class="form-control">
+            <option value="light">Light / Bulb</option>
+            <option value="fan">Fan / Exhaust</option>
+            <option value="power">Master Power</option>
+            <option value="ac">AC / Cooler</option>
+            <option value="water">Water Pump</option>
+            <option value="switch">General Switch</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Blynk Auth Token (leave blank for global token)</label>
+          <input type="text" id="devToken" class="form-control" placeholder="Blynk Auth Token">
+        </div>
+        <div class="form-group">
+          <label>Blynk Server URL</label>
+          <input type="text" id="devServer" class="form-control" value="https://blynk.cloud/external/api/update">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeDeviceModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveDeviceForm()">Save Device</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Modal (Create/Edit) -->
+  <div class="modal-overlay" id="userModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="userModalTitle">Add Authorized User</h3>
+        <button class="action-icon-btn" onclick="closeUserModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="userEditId">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="uName" class="form-control" placeholder="e.g. Family Member">
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="uEmail" class="form-control" placeholder="user@gmail.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="uPassword" class="form-control" placeholder="Password">
+        </div>
+        <div class="form-group">
+          <label>Account Role</label>
+          <select id="uRole" class="form-control">
+            <option value="USER">USER (Restricted Pin Access)</option>
+            <option value="ADMIN">ADMIN (Full Access)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Allowed Pins (comma-separated or * for all)</label>
+          <input type="text" id="uPins" class="form-control" placeholder="V1, V2, V3 or *">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeUserModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveUserForm()">Save User</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <div class="modal-overlay" id="loginModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>User Authentication</h3>
+        <button class="action-icon-btn" onclick="closeLoginModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.85rem;color:var(--text-secondary);">Select an existing cloud account or log in with credentials:</p>
+        <div class="form-group">
+          <label>Select User</label>
+          <select id="quickUserSelect" class="form-control" onchange="fillLoginFromSelect(this.value)">
+            <!-- Options populated dynamically -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="loginEmail" class="form-control" placeholder="email@example.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPass" class="form-control" placeholder="password">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="logoutCurrent()">Log Out</button>
+        <button class="btn btn-primary" onclick="performLogin()">Log In</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Application Logic -->
+  <script>
+    // Configuration & Inbuilt Credentials from Android Codebase
+    const DEFAULT_CONFIG = {
+      githubToken: "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",
+      gistId: "a10c57cbaa29ad881ba9f1b49c4eed2f",
+      gistFileName: "manish_home_users_db.json",
+      blynkToken: "YOUR_BLYNK_AUTH_TOKEN",
+      voiceFeedback: true,
+      voiceLanguage: "HI",
+      autoSyncInterval: 30
+    };
+
+    // State Variables
+    let currentConfig = { ...DEFAULT_CONFIG };
+    let users = [];
+    let webhooks = [];
+    let currentUser = null;
+    let autoSyncTimer = null;
+    let countdownInterval = null;
+    let remainingSeconds = 30;
+
+    // Default seed data in case Gist is empty initially
+    const SEED_USERS = [
+      {
+        id: 1,
+        name: "Admin (Manish)",
+        email: "admin@manishhome.com",
+        password: "admin",
+        role: "ADMIN",
+        allowedPins: "*",
+        isBlocked: false,
+        canUseMasterControl: true,
+        canViewPinStatus: true
+      },
+      {
+        id: 2,
+        name: "Family User",
+        email: "family@gmail.com",
+        password: "user",
+        role: "USER",
+        allowedPins: "V1,V2,V3",
+        isBlocked: false,
+        canUseMasterControl: false,
+        canViewPinStatus: true
+      }
+    ];
+
+    const SEED_WEBHOOKS = [
+      {
+        id: 1,
+        name: "Switch",
+        pin: "V1",
+        onValue: "0",
+        offValue: "1",
+        currentState: "1",
+        isToggle: true,
+        roomCategory: "Living Room",
+        iconName: "power",
+        blynkToken: "YOUR_BLYNK_AUTH_TOKEN",
+        serverUrl: "https://blynk.cloud/external/api/update"
+      },
+      {
+        id: 2,
+        name: "Light",
+        pin: "V2",
+        onValue: "0",
+        offValue: "1",
+        currentState: "1",
+        isToggle: true,
+        roomCategory: "Living Room",
+        iconName: "light",
+        blynkToken: "YOUR_BLYNK_AUTH_TOKEN",
+        serverUrl: "https://blynk.cloud/external/api/update"
+      },
+      {
+        id: 3,
+        name: "Fan",
+        pin: "V3",
+        onValue: "0",
+        offValue: "1",
+        currentState: "1",
+        isToggle: true,
+        roomCategory: "Living Room",
+        iconName: "fan",
+        blynkToken: "YOUR_BLYNK_AUTH_TOKEN",
+        serverUrl: "https://blynk.cloud/external/api/update"
+      },
+      {
+        id: 4,
+        name: "Water Pump",
+        pin: "V4",
+        onValue: "0",
+        offValue: "1",
+        currentState: "1",
+        isToggle: true,
+        roomCategory: "Utility",
+        iconName: "water",
+        blynkToken: "YOUR_BLYNK_AUTH_TOKEN",
+        serverUrl: "https://blynk.cloud/external/api/update"
+      }
+    ];
+
+    // --- Initialization ---
+    window.addEventListener("DOMContentLoaded", () => {
+      loadLocalStorage();
+      renderUI();
+      startAutoSyncLoop();
+      // Initial sync with cloud Gist
+      syncWithCloud(true);
+    });
+
+    function loadLocalStorage() {
+      const savedCfg = localStorage.getItem("manish_home_cfg");
+      if (savedCfg) {
+        try { currentConfig = { ...DEFAULT_CONFIG, ...JSON.parse(savedCfg) }; } catch (e) {}
+      }
+
+      const savedUsers = localStorage.getItem("manish_home_users");
+      users = savedUsers ? JSON.parse(savedUsers) : [...SEED_USERS];
+
+      const savedWebhooks = localStorage.getItem("manish_home_webhooks");
+      webhooks = savedWebhooks ? JSON.parse(savedWebhooks) : [...SEED_WEBHOOKS];
+
+      const savedUser = localStorage.getItem("manish_home_active_user");
+      currentUser = savedUser ? JSON.parse(savedUser) : users[0];
+
+      // Sync form fields
+      document.getElementById("cfgGithubToken").value = currentConfig.githubToken || "";
+      document.getElementById("cfgGistId").value = currentConfig.gistId || "";
+      document.getElementById("voiceFeedbackToggle").checked = currentConfig.voiceFeedback !== false;
+      document.getElementById("voiceLangSelect").value = currentConfig.voiceLanguage || "HI";
+      document.getElementById("autoSyncIntervalSelect").value = currentConfig.autoSyncInterval || 30;
+      document.getElementById("globalBlynkToken").value = currentConfig.blynkToken || "";
+    }
+
+    function saveLocalStorage() {
+      localStorage.setItem("manish_home_cfg", JSON.stringify(currentConfig));
+      localStorage.setItem("manish_home_users", JSON.stringify(users));
+      localStorage.setItem("manish_home_webhooks", JSON.stringify(webhooks));
+      localStorage.setItem("manish_home_active_user", JSON.stringify(currentUser));
+    }
+
+    // --- Tab Switching ---
+    function switchTab(tabId, el) {
+      document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+      document.querySelectorAll("nav .nav-btn").forEach(btn => btn.classList.remove("active"));
+      
+      const target = document.getElementById("tab-" + tabId);
+      if (target) target.classList.add("active");
+      if (el) el.classList.add("active");
+    }
+
+    // --- Spoken Voice Feedback (Web Speech API) ---
+    function speakFeedback(deviceName, isActionOn, isSuccess = true, customReason = null) {
+      if (!currentConfig.voiceFeedback) return;
+      if (!('speechSynthesis' in window)) return;
+
+      const isHindi = (currentConfig.voiceLanguage === "HI");
+      let text = "";
+
+      if (customReason) {
+        text = customReason;
+      } else if (isSuccess) {
+        if (isHindi) {
+          text = isActionOn ? `${deviceName} चालू हो गया है` : `${deviceName} बंद हो गया है`;
+        } else {
+          text = isActionOn ? `${deviceName} turned on` : `${deviceName} turned off`;
+        }
+      } else {
+        if (isHindi) {
+          text = isActionOn ? `${deviceName} चालू नहीं हुआ` : `${deviceName} बंद नहीं हुआ`;
+        } else {
+          text = isActionOn ? `Failed to turn on ${deviceName}` : `Failed to turn off ${deviceName}`;
+        }
+      }
+
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+
+      // Select voices if available
+      const voices = window.speechSynthesis.getVoices();
+      if (isHindi) {
+        const hiVoice = voices.find(v => v.lang.includes("hi") || v.lang.includes("HI"));
+        if (hiVoice) utterance.voice = hiVoice;
+        utterance.lang = "hi-IN";
+      } else {
+        utterance.lang = "en-US";
+      }
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function testSpokenFeedback(testOn) {
+      speakFeedback("Light", testOn, true);
+      showToast(`Testing voice feedback: Light ${testOn ? "ON" : "OFF"}`);
+    }
+
+    // --- User Permissions Check ---
+    function userCanAccessPin(pin) {
+      if (!currentUser) return false;
+      if (currentUser.role === "ADMIN") return true;
+      if (!currentUser.allowedPins) return false;
+      if (currentUser.allowedPins.trim() === "*") return true;
+      const allowed = currentUser.allowedPins.split(",").map(p => p.trim().toUpperCase());
+      return allowed.includes(pin.trim().toUpperCase());
+    }
+
+    // --- Blynk API Hardware Trigger ---
+    async function triggerDevice(deviceId, explicitValue = null) {
+      const dev = webhooks.find(w => w.id === deviceId);
+      if (!dev) return;
+
+      // Check permission
+      if (!userCanAccessPin(dev.pin)) {
+        const msg = `पिन ${dev.pin} की परमिशन एडमिन द्वारा प्रतिबंधित है`;
+        speakFeedback(dev.name, false, false, msg);
+        showToast(`🔒 Access Denied: Pin ${dev.pin} restricted for ${currentUser.name}`, "error");
+        addLog("PERMISSION_DENIED", `Blocked access to ${dev.name} [${dev.pin}]`, "danger");
+        return;
+      }
+
+      // Calculate next value
+      let nextVal = explicitValue;
+      if (nextVal === null) {
+        if (dev.isToggle) {
+          nextVal = (dev.currentState === dev.onValue) ? dev.offValue : dev.onValue;
+        } else {
+          nextVal = dev.onValue;
+        }
+      }
+
+      const isActionOn = (nextVal === dev.onValue);
+      const token = dev.blynkToken?.trim() || currentConfig.blynkToken?.trim();
+      const server = dev.serverUrl?.trim() || "https://blynk.cloud/external/api/update";
+      const cleanPin = encodeURIComponent(dev.pin.trim());
+      const cleanVal = encodeURIComponent(nextVal.trim());
+
+      const url = `${server}?token=${encodeURIComponent(token)}&${cleanPin}=${cleanVal}`;
+      const startTime = performance.now();
+
+      // Optimistic UI state update
+      dev.currentState = nextVal;
+      renderDevices();
+      renderStatusTable();
+
+      try {
+        // Send request via fetch with CORS & fallback
+        let respSuccess = true;
+        try {
+          const resp = await fetch(url, { method: "GET", mode: "cors" });
+          respSuccess = resp.ok;
+        } catch (corsErr) {
+          // If browser blocks CORS, fallback to image beacon or no-cors
+          new Image().src = url;
+          respSuccess = true; // Delivered via beacon
+        }
+
+        const latency = Math.round(performance.now() - startTime);
+
+        if (respSuccess) {
+          speakFeedback(dev.name, isActionOn, true);
+          showToast(`✓ ${dev.name}: ${isActionOn ? "ON" : "OFF"} (${latency}ms)`, "success");
+          addLog("TRIGGER", `${dev.name} [${dev.pin} -> ${nextVal}] triggered successfully (${latency}ms)`, "success");
+        } else {
+          speakFeedback(dev.name, isActionOn, false);
+          showToast(`✗ ${dev.name}: Server Error`, "error");
+          addLog("TRIGGER_ERR", `Failed to trigger ${dev.name} [${dev.pin}]`, "danger");
+        }
+      } catch (err) {
+        speakFeedback(dev.name, isActionOn, false);
+        showToast(`✗ ${dev.name}: ${err.message}`, "error");
+        addLog("NETWORK_ERR", `Network failure triggering ${dev.name}`, "danger");
+      }
+
+      saveLocalStorage();
+    }
+
+    // --- Master Batch Trigger ---
+    async function triggerMasterBatch(turnOn) {
+      if (currentUser && currentUser.role !== "ADMIN" && !currentUser.canUseMasterControl) {
+        showToast("🔒 Master Control is restricted to Admin", "error");
+        return;
+      }
+
+      const accessiblePins = webhooks.filter(w => userCanAccessPin(w.pin));
+      if (accessiblePins.length === 0) {
+        showToast("No accessible devices found", "error");
+        return;
+      }
+
+      showToast(`Triggering All Pins ${turnOn ? "ON" : "OFF"}...`);
+      for (const dev of accessiblePins) {
+        const val = turnOn ? dev.onValue : dev.offValue;
+        triggerDevice(dev.id, val);
+        await new Promise(r => setTimeout(r, 60)); // Small stagger
+      }
+
+      speakFeedback(currentConfig.voiceLanguage === "HI" ? "सभी उपकरण" : "All Devices", turnOn, true);
+    }
+
+    async function executeCustomUrl(turnOn) {
+      const url = document.getElementById("customBatchUrl").value.trim();
+      if (!url) {
+        showToast("Please enter a valid URL", "error");
+        return;
+      }
+      try {
+        new Image().src = url;
+        await fetch(url, { method: "GET", mode: "no-cors" });
+        showToast("Custom batch URL executed!", "success");
+        speakFeedback("कस्टम ग्रुप", turnOn, true);
+        addLog("CUSTOM_BATCH", `Executed custom endpoint: ${url.slice(0, 50)}...`, "success");
+      } catch (e) {
+        showToast("Error executing URL", "error");
+      }
+    }
+
+    // --- Live Pin Status Syncing ---
+    async function syncPinStatuses() {
+      let count = 0;
+      for (const dev of webhooks) {
+        const token = dev.blynkToken?.trim() || currentConfig.blynkToken?.trim();
+        const pin = dev.pin.trim();
+        if (!token || token === "YOUR_BLYNK_AUTH_TOKEN") continue;
+
+        const getUrl = `https://blynk.cloud/external/api/get?token=${encodeURIComponent(token)}&${encodeURIComponent(pin)}`;
+        try {
+          const resp = await fetch(getUrl);
+          if (resp.ok) {
+            const val = (await resp.text()).trim();
+            dev.currentState = val;
+            count++;
+          }
+        } catch (e) {}
+      }
+      saveLocalStorage();
+      renderDevices();
+      renderStatusTable();
+      remainingSeconds = currentConfig.autoSyncInterval || 30;
+      addLog("PIN_SYNC", `Synced live pin values from Blynk Cloud (${count}/${webhooks.length} updated)`, "success");
+    }
+
+    function startAutoSyncLoop() {
+      if (autoSyncTimer) clearInterval(autoSyncTimer);
+      if (countdownInterval) clearInterval(countdownInterval);
+
+      remainingSeconds = currentConfig.autoSyncInterval || 30;
+      document.getElementById("syncCountdown").textContent = remainingSeconds;
+
+      countdownInterval = setInterval(() => {
+        remainingSeconds--;
+        if (remainingSeconds <= 0) {
+          remainingSeconds = currentConfig.autoSyncInterval || 30;
+          syncPinStatuses();
+        }
+        document.getElementById("syncCountdown").textContent = remainingSeconds;
+      }, 1000);
+    }
+
+    function changeSyncInterval(val) {
+      currentConfig.autoSyncInterval = parseInt(val) || 30;
+      saveLocalStorage();
+      startAutoSyncLoop();
+      showToast(`Auto-sync interval set to ${val}s`);
+    }
+
+    // --- GitHub Cloud Gist Sync ---
+    async function syncWithCloud(silent = false) {
+      const gistId = currentConfig.gistId?.trim();
+      const token = currentConfig.githubToken?.trim();
+
+      if (!gistId) {
+        if (!silent) showToast("GitHub Gist ID not configured", "error");
+        return;
+      }
+
+      try {
+        const headers = {
+          "Accept": "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28"
+        };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const resp = await fetch(`https://api.github.com/gists/${gistId}`, { headers });
+        if (!resp.ok) throw new Error(`HTTP ${resp.code || resp.status}`);
+
+        const data = await resp.json();
+        const fileObj = data.files[currentConfig.gistFileName] || Object.values(data.files)[0];
+        if (!fileObj || !fileObj.content) throw new Error("Gist database file is empty");
+
+        const parsed = JSON.parse(fileObj.content);
+        if (parsed.users && Array.isArray(parsed.users) && parsed.users.length > 0) {
+          users = parsed.users;
+        }
+        if (parsed.webhooks && Array.isArray(parsed.webhooks) && parsed.webhooks.length > 0) {
+          webhooks = parsed.webhooks;
+        }
+
+        saveLocalStorage();
+        renderUI();
+        if (!silent) showToast(`✓ Synced from GitHub Gist (${users.length} users, ${webhooks.length} pins)`, "success");
+        addLog("GITHUB_PULL", `Pulled database from GitHub Gist ID: ${gistId}`, "success");
+      } catch (err) {
+        if (!silent) showToast(`GitHub Sync failed: ${err.message}`, "error");
+        addLog("GITHUB_ERR", `Failed to pull from GitHub Gist: ${err.message}`, "danger");
+      }
+    }
+
+    async function pushToGitHubGist() {
+      const gistId = currentConfig.gistId?.trim();
+      const token = currentConfig.githubToken?.trim();
+
+      if (!token) {
+        showToast("GitHub Personal Access Token required to push updates", "error");
+        return;
+      }
+
+      const payload = {
+        app: "Manish Home Automation",
+        version: 3,
+        updatedAt: Date.now(),
+        users: users,
+        webhooks: webhooks
+      };
+
+      const gistBody = {
+        files: {
+          [currentConfig.gistFileName]: {
+            content: JSON.stringify(payload, null, 2)
+          }
+        }
+      };
+
+      try {
+        showToast("Pushing updates to GitHub Gist...");
+        const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
+          method: "PATCH",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(gistBody)
+        });
+
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        showToast("✓ Cloud Database successfully updated on GitHub!", "success");
+        addLog("GITHUB_PUSH", `Pushed updated users & pins to Gist ID: ${gistId}`, "success");
+      } catch (e) {
+        showToast(`Failed to update GitHub Gist: ${e.message}`, "error");
+        addLog("GITHUB_PUSH_ERR", `Failed to update Gist: ${e.message}`, "danger");
+      }
+    }
+
+    // --- Render Functions ---
+    function renderUI() {
+      renderHeaderUser();
+      renderDevices();
+      renderStatusTable();
+      renderUsersTable();
+      renderLogs();
+    }
+
+    function renderHeaderUser() {
+      const u = currentUser || users[0];
+      document.getElementById("headerUserName").textContent = u.name;
+      const badge = document.getElementById("headerRoleBadge");
+      badge.textContent = u.role;
+      badge.className = `role-badge ${u.role === "ADMIN" ? "admin" : ""}`;
+    }
+
+    function getDeviceIconSvg(iconName) {
+      const name = (iconName || "switch").toLowerCase();
+      if (name.includes("light") || name.includes("bulb")) {
+        return `<svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zm-3 18c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1z"/></svg>`;
+      } else if (name.includes("fan")) {
+        return `<svg viewBox="0 0 24 24"><path d="M12 12c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1s-1 .45-1 1v8c0 .55.45 1 1 1zm5.66-3.66c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41l5.66 5.66c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41l-5.66-5.66zM12 14c-.55 0-1 .45-1 1v8c0 .55.45 1 1 1s1-.45 1-1v-8c0-.55-.45-1-1-1zm-4.24-4.24c-.39-.39-1.02-.39-1.41 0L.69 15.42c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l5.66-5.66c.39-.4.39-1.03 0-1.41z"/></svg>`;
+      } else if (name.includes("water") || name.includes("pump")) {
+        return `<svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`;
+      } else if (name.includes("power")) {
+        return `<svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>`;
+      }
+      return `<svg viewBox="0 0 24 24"><path d="M17 7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h10c2.76 0 5-2.24 5-5s-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/></svg>`;
+    }
+
+    function renderDevices() {
+      const container = document.getElementById("devicesGrid");
+      container.innerHTML = "";
+
+      webhooks.forEach(dev => {
+        const isOn = (dev.currentState === dev.onValue);
+        const hasAccess = userCanAccessPin(dev.pin);
+
+        const card = document.createElement("div");
+        card.className = `device-card ${isOn ? "is-on" : ""}`;
+        card.innerHTML = `
+          <div class="device-card-header">
+            <div class="device-info">
+              <div class="device-icon-box">
+                ${getDeviceIconSvg(dev.iconName)}
+              </div>
+              <div class="device-titles">
+                <h3>${dev.name}</h3>
+                <div class="device-meta">
+                  <span class="pin-badge">${dev.pin}</span>
+                  <span>${dev.roomCategory || "General"}</span>
+                </div>
+              </div>
+            </div>
+            <div class="switch-wrapper">
+              <label class="custom-switch ${!hasAccess ? 'disabled' : ''}">
+                <input type="checkbox" ${isOn ? 'checked' : ''} onchange="triggerDevice(${dev.id})" ${!hasAccess ? 'disabled' : ''}>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="device-card-footer">
+            <span>Status: <strong style="color:${isOn ? 'var(--success)' : 'var(--text-muted)'}">${isOn ? 'ACTIVE (ON)' : 'STANDBY (OFF)'}</strong></span>
+            <div class="device-card-actions">
+              ${currentUser?.role === 'ADMIN' ? `
+                <button class="action-icon-btn" title="Edit Device" onclick="openDeviceModal(${dev.id})">
+                  <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                </button>
+                <button class="action-icon-btn" title="Delete Device" onclick="deleteDevice(${dev.id})">
+                  <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderStatusTable() {
+      const tbody = document.getElementById("statusTableBody");
+      tbody.innerHTML = "";
+
+      webhooks.forEach(dev => {
+        const isOn = (dev.currentState === dev.onValue);
+        const hasAccess = userCanAccessPin(dev.pin);
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td><strong>${dev.name}</strong></td>
+          <td><span class="pin-badge">${dev.pin}</span></td>
+          <td>
+            <span class="status-pill ${isOn ? 'on' : 'off'}">
+              <span class="status-dot" style="background:${isOn ? 'var(--success)' : 'var(--danger)'}"></span>
+              ${isOn ? 'ONLINE (ON)' : 'STANDBY (OFF)'}
+            </span>
+          </td>
+          <td>${dev.roomCategory || "General"}</td>
+          <td style="color:var(--text-muted);font-size:0.8rem;">Just now</td>
+          <td>
+            <button class="btn btn-sm ${isOn ? 'btn-danger' : 'btn-success'}" ${!hasAccess ? 'disabled' : ''} onclick="triggerDevice(${dev.id})">
+              ${isOn ? 'Turn OFF' : 'Turn ON'}
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderUsersTable() {
+      const tbody = document.getElementById("usersTableBody");
+      tbody.innerHTML = "";
+
+      users.forEach(u => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>
+            <div><strong>${u.name}</strong></div>
+            <div style="font-size:0.75rem;color:var(--text-secondary);">${u.email}</div>
+          </td>
+          <td>
+            <span class="role-badge ${u.role === 'ADMIN' ? 'admin' : ''}">${u.role}</span>
+          </td>
+          <td>
+            <code style="font-family:'JetBrains Mono';font-size:0.8rem;color:var(--primary);">${u.allowedPins || '*'}</code>
+          </td>
+          <td>
+            <span style="color:${u.isBlocked ? 'var(--danger)' : 'var(--success)'};font-size:0.8rem;font-weight:600;">
+              ${u.isBlocked ? 'Blocked' : 'Active'}
+            </span>
+          </td>
+          <td>
+            ${currentUser?.role === 'ADMIN' && u.email !== currentUser.email ? `
+              <button class="btn btn-sm" onclick="toggleBlockUser(${u.id})">
+                ${u.isBlocked ? 'Unblock' : 'Block'}
+              </button>
+              <button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">Delete</button>
+            ` : '<span style="color:var(--text-muted);font-size:0.75rem;">(Active Admin)</span>'}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- Activity Log Engine ---
+    let logEntries = [];
+    function addLog(tag, message, status = "primary") {
+      const time = new Date().toLocaleTimeString();
+      logEntries.unshift({ time, tag, message, status });
+      if (logEntries.length > 80) logEntries.pop();
+      renderLogs();
+    }
+
+    function renderLogs() {
+      const box = document.getElementById("logContainer");
+      if (!box) return;
+      box.innerHTML = logEntries.map(e => `
+        <div class="log-entry">
+          <span class="log-time">[${e.time}]</span>
+          <span class="log-tag ${e.status}">${e.tag}</span>
+          <span>${e.message}</span>
+        </div>
+      `).join("");
+    }
+
+    function clearLogs() {
+      logEntries = [];
+      renderLogs();
+    }
+
+    // --- Toast Engine ---
+    function showToast(message, type = "normal") {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 250);
+      }, 3500);
+    }
+
+    // --- Device Modal Handlers ---
+    function openDeviceModal(id = null) {
+      const modal = document.getElementById("deviceModal");
+      const title = document.getElementById("deviceModalTitle");
+      if (id) {
+        const d = webhooks.find(w => w.id === id);
+        if (!d) return;
+        title.textContent = "Edit Device";
+        document.getElementById("devEditId").value = d.id;
+        document.getElementById("devName").value = d.name;
+        document.getElementById("devPin").value = d.pin;
+        document.getElementById("devRoom").value = d.roomCategory || "";
+        document.getElementById("devOnVal").value = d.onValue || "0";
+        document.getElementById("devOffVal").value = d.offValue || "1";
+        document.getElementById("devIcon").value = d.iconName || "switch";
+        document.getElementById("devToken").value = d.blynkToken || "";
+        document.getElementById("devServer").value = d.serverUrl || "https://blynk.cloud/external/api/update";
+      } else {
+        title.textContent = "Add Device / Relay";
+        document.getElementById("devEditId").value = "";
+        document.getElementById("devName").value = "";
+        document.getElementById("devPin").value = `V${webhooks.length + 1}`;
+        document.getElementById("devRoom").value = "Living Room";
+        document.getElementById("devOnVal").value = "0";
+        document.getElementById("devOffVal").value = "1";
+        document.getElementById("devIcon").value = "switch";
+        document.getElementById("devToken").value = currentConfig.blynkToken || "";
+        document.getElementById("devServer").value = "https://blynk.cloud/external/api/update";
+      }
+      modal.classList.add("open");
+    }
+
+    function closeDeviceModal() {
+      document.getElementById("deviceModal").classList.remove("open");
+    }
+
+    function saveDeviceForm() {
+      const editId = document.getElementById("devEditId").value;
+      const name = document.getElementById("devName").value.trim() || "Appliance";
+      const pin = document.getElementById("devPin").value.trim().toUpperCase() || "V1";
+      const room = document.getElementById("devRoom").value.trim() || "General";
+      const onVal = document.getElementById("devOnVal").value.trim() || "0";
+      const offVal = document.getElementById("devOffVal").value.trim() || "1";
+      const icon = document.getElementById("devIcon").value;
+      const token = document.getElementById("devToken").value.trim();
+      const server = document.getElementById("devServer").value.trim() || "https://blynk.cloud/external/api/update";
+
+      if (editId) {
+        const dev = webhooks.find(w => w.id === parseInt(editId));
+        if (dev) {
+          dev.name = name;
+          dev.pin = pin;
+          dev.roomCategory = room;
+          dev.onValue = onVal;
+          dev.offValue = offVal;
+          dev.iconName = icon;
+          dev.blynkToken = token;
+          dev.serverUrl = server;
+        }
+      } else {
+        const newDev = {
+          id: Date.now(),
+          name,
+          pin,
+          roomCategory: room,
+          onValue: onVal,
+          offValue: offVal,
+          currentState: offVal,
+          isToggle: true,
+          iconName: icon,
+          blynkToken: token,
+          serverUrl: server
+        };
+        webhooks.push(newDev);
+      }
+
+      saveLocalStorage();
+      renderUI();
+      closeDeviceModal();
+      showToast("Device saved successfully!");
+      pushToGitHubGist();
+    }
+
+    function deleteDevice(id) {
+      if (!confirm("Delete this device?")) return;
+      webhooks = webhooks.filter(w => w.id !== id);
+      saveLocalStorage();
+      renderUI();
+      showToast("Device deleted");
+      pushToGitHubGist();
+    }
+
+    // --- User Modal Handlers ---
+    function openAddUserModal() {
+      document.getElementById("uName").value = "";
+      document.getElementById("uEmail").value = "";
+      document.getElementById("uPassword").value = "";
+      document.getElementById("uPins").value = "*";
+      document.getElementById("uRole").value = "USER";
+      document.getElementById("userModal").classList.add("open");
+    }
+
+    function closeUserModal() {
+      document.getElementById("userModal").classList.remove("open");
+    }
+
+    function saveUserForm() {
+      const name = document.getElementById("uName").value.trim();
+      const email = document.getElementById("uEmail").value.trim().toLowerCase();
+      const pass = document.getElementById("uPassword").value.trim();
+      const role = document.getElementById("uRole").value;
+      const pins = document.getElementById("uPins").value.trim() || "*";
+
+      if (!name || !email) {
+        showToast("Name and email are required", "error");
+        return;
+      }
+
+      const newUser = {
+        id: Date.now(),
+        name,
+        email,
+        password: pass || "1234",
+        role,
+        allowedPins: pins,
+        isBlocked: false,
+        canUseMasterControl: (role === "ADMIN"),
+        canViewPinStatus: true
+      };
+
+      users.push(newUser);
+      saveLocalStorage();
+      renderUsersTable();
+      closeUserModal();
+      showToast(`User ${name} added!`);
+      pushToGitHubGist();
+    }
+
+    function toggleBlockUser(id) {
+      const u = users.find(x => x.id === id);
+      if (u) {
+        u.isBlocked = !u.isBlocked;
+        saveLocalStorage();
+        renderUsersTable();
+        showToast(`User ${u.name} is now ${u.isBlocked ? 'Blocked' : 'Active'}`);
+        pushToGitHubGist();
+      }
+    }
+
+    function deleteUser(id) {
+      if (!confirm("Are you sure you want to delete this user?")) return;
+      users = users.filter(x => x.id !== id);
+      saveLocalStorage();
+      renderUsersTable();
+      showToast("User removed");
+      pushToGitHubGist();
+    }
+
+    // --- Login Handlers ---
+    function openLoginModal() {
+      const select = document.getElementById("quickUserSelect");
+      select.innerHTML = users.map(u => `<option value="${u.id}">${u.name} (${u.role}) - ${u.email}</option>`).join("");
+      if (currentUser) select.value = currentUser.id;
+      document.getElementById("loginEmail").value = currentUser?.email || "";
+      document.getElementById("loginPass").value = currentUser?.password || "";
+      document.getElementById("loginModal").classList.add("open");
+    }
+
+    function closeLoginModal() {
+      document.getElementById("loginModal").classList.remove("open");
+    }
+
+    function fillLoginFromSelect(userId) {
+      const u = users.find(x => x.id == userId);
+      if (u) {
+        document.getElementById("loginEmail").value = u.email;
+        document.getElementById("loginPass").value = u.password;
+      }
+    }
+
+    function performLogin() {
+      const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+      const pass = document.getElementById("loginPass").value.trim();
+
+      const user = users.find(u => u.email.toLowerCase() === email && (u.password === pass || !pass));
+      if (!user) {
+        showToast("Invalid credentials", "error");
+        return;
+      }
+      if (user.isBlocked) {
+        showToast("This account is blocked by the Administrator", "error");
+        return;
+      }
+
+      currentUser = user;
+      saveLocalStorage();
+      renderUI();
+      closeLoginModal();
+      showToast(`Welcome back, ${user.name}!`, "success");
+    }
+
+    function logoutCurrent() {
+      currentUser = users[0];
+      saveLocalStorage();
+      renderUI();
+      closeLoginModal();
+      showToast("Logged out");
+    }
+
+    // --- Settings Handlers ---
+    function saveFeedbackSettings() {
+      currentConfig.voiceFeedback = document.getElementById("voiceFeedbackToggle").checked;
+      currentConfig.voiceLanguage = document.getElementById("voiceLangSelect").value;
+      saveLocalStorage();
+      showToast("Voice feedback settings saved");
+    }
+
+    function saveCloudConfig() {
+      currentConfig.githubToken = document.getElementById("cfgGithubToken").value.trim();
+      currentConfig.gistId = document.getElementById("cfgGistId").value.trim();
+      saveLocalStorage();
+      showToast("Credentials saved! Syncing with GitHub...");
+      syncWithCloud();
+    }
+
+    function saveGlobalBlynkToken() {
+      const tok = document.getElementById("globalBlynkToken").value.trim();
+      currentConfig.blynkToken = tok;
+      saveLocalStorage();
+      showToast("Global Blynk Token updated!");
+    }
+  </script>
+</body>
+</html>
